@@ -2,9 +2,9 @@ import { registerPlugin } from '@capacitor/core';
 
 import type { MultiCameraPlugin } from './definitions';
 
-const MultiCamera = registerPlugin<MultiCameraPlugin>('MultiCamera', {
-  web: () => import('./web').then((m) => new m.MultiCameraWeb()),
+const Camera = registerPlugin<MultiCameraPlugin>('Camera', {
+  web: () => import('./web').then((m) => new m.CameraWeb()),
 });
 
 export * from './definitions';
-export { MultiCamera };
+export { Camera };

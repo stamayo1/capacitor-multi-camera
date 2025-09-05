@@ -8,7 +8,7 @@ import Capacitor
 @objc(MultiCameraPlugin)
 public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "MultiCameraPlugin"
-    public let jsName = "MultiCamera"
+    public let jsName = "Camera"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "echo", returnType: CAPPluginReturnPromise)
     ]
