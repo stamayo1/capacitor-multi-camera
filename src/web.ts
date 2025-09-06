@@ -9,10 +9,11 @@ export class CameraWeb extends WebPlugin implements MultiCameraPlugin {
   pickImages(): Promise<GalleryPhotosResult> {
     throw new Error('Method not implemented.');
   }
-  checkPermissions(): Promise<{ camera: 'granted' | 'denied' | 'prompt'; }> {
+  checkPermissions(): Promise<{ camera: 'granted' | 'denied' | 'prompt'; photo: 'granted' | 'denied' | 'prompt';}>{
     throw new Error('Method not implemented.');
   }
-  requestPermissions(): Promise<{ camera: 'granted' | 'denied'; }> {
+  
+  requestPermissions(): Promise<{ camera: 'granted' | 'denied'; photo:  'granted' | 'denied'; }>{
     throw new Error('Method not implemented.');
   }
   
