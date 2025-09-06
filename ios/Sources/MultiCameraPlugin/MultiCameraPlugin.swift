@@ -16,6 +16,7 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
     //Public methods to comunicate with JS
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "checkPermissions", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
     ]
     
     // Variables
@@ -32,5 +33,19 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
         
         let result: [String: Any] = implementation.checkPermissions()
         call.resolve(result)
+    }
+    
+    
+    @objc override public func requestPermissions(_ call: CAPPluginCall) {
+        // get the list of desired types, if passed
+        let typeList = call.getArray("permissions", String.self)?.compactMap({ (type) -> CameraPermissionType? in
+                        return CameraPermissionType(rawValue: type)
+                    }) ?? []
+        
+        let group = implementation.requestCameraPermissions(typeList)
+    
+        group.notify(queue: DispatchQueue.main) { [weak self] in
+            self?.checkPermissions(call)
+        }
     }
 }

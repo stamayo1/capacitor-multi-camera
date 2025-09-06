@@ -42,4 +42,36 @@ import AVFoundation
         
         return result
     }
+    
+    
+    func requestCameraPermissions(_ typeList: [CameraPermissionType])  -> DispatchGroup {
+       let permissions: [CameraPermissionType] = (typeList.count > 0) ? typeList : CameraPermissionType.allCases
+
+       // request the permissions
+       let group = DispatchGroup()
+
+       for permission in permissions {
+           switch permission {
+           case .camera:
+               group.enter()
+               AVCaptureDevice.requestAccess(for: .video) { _ in
+                   group.leave()
+               }
+           case .photos:
+               group.enter()
+               if #available(iOS 14, *) {
+                   PHPhotoLibrary.requestAuthorization(for: .readWrite) { (_) in
+                       group.leave()
+                   }
+               } else {
+                   PHPhotoLibrary.requestAuthorization({ (_) in
+                       group.leave()
+                   })
+               }
+           }
+       }
+   
+       return group
+   }
+
 }

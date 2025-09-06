@@ -7,3 +7,7 @@ window.testCheckPermissions = async  () => {
     persmissions.innerText = JSON.stringify(result);
     container.appendChild(persmissions);
 }
+
+window.testRequestPermissions = () => {
+    Camera.requestPermissions();
+}
