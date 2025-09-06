@@ -147,10 +147,10 @@ export interface MultiCameraPlugin {
   /**
    * Check if the app has permissions to use the camera (and optionally gallery).
    */
-  checkPermissions(): Promise<{ camera: 'granted' | 'denied' | 'prompt' }>;
+  checkPermissions(): Promise<{ camera: 'granted' | 'denied' | 'prompt'; photo: 'granted' | 'denied' | 'prompt';}>;
 
   /**
    * Request the necessary permissions to use the camera (and optionally gallery).
    */
-  requestPermissions(): Promise<{ camera: 'granted' | 'denied' }>;
+  requestPermissions(): Promise<{ camera: 'granted' | 'denied'; photo:  'granted' | 'denied'; }>;
 }
