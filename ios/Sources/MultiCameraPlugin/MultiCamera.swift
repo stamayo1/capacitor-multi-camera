@@ -73,5 +73,18 @@ import AVFoundation
    
        return group
    }
-
+    
+    /// Check if the required `Info.plist` usage description keys (camera and photo library permissions) are present
+    /// - Returns :
+    ///     - A `Strings` containing a warning message
+    ///     - `nill` if all required keys are present
+    func checkUsageDescriptions() -> String? {
+       if let dict = Bundle.main.infoDictionary {
+           for key in CameraPropertyListKeys.allCases where dict[key.rawValue] == nil {
+               return key.missingMessage
+           }
+       }
+       return nil
+    }
+    
 }

@@ -96,3 +96,22 @@ internal enum CameraPropertyListKeys: String, CaseIterable {
     }
 }
 
+
+
+/// This enum centralizes and organizes the Error message
+internal enum ErrorHandled: String, CaseIterable {
+    
+    case userCancelled = "PC100"
+    
+    /// Returns the official Apple documentation URL for the specific key.
+    var message: String {
+        switch self {
+        case .userCancelled:
+            return "USER_CANCELLED_PROCESS"
+        }
+    }
+    
+    var missingMessage: String {
+        return "\(self.rawValue) - \(self.message)"
+    }
+}
