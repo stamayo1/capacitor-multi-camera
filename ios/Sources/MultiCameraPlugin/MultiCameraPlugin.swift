@@ -32,6 +32,7 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
     
     @objc func pickImages(_ call: CAPPluginCall) {
         self.call = call
+        self.settings = cameraSettings(from: call)
 
         // Make sure they have all the necessary info.plist settings
         if let missingUsageDescription = implementation.checkUsageDescriptions() {
@@ -42,7 +43,7 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
        
         DispatchQueue.main.async {
             var config = PHPickerConfiguration(photoLibrary: .shared())
-            config.selectionLimit = call.getInt("limit") ?? 0 // 0 = unlimited, or set X for a max limit
+            config.selectionLimit = self.settings.limit
             config.filter = .images
             
             let picker = PHPickerViewController(configuration: config)
@@ -127,6 +128,29 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
 
         return result
     }
+    
+    ///  Set up  global config
+    private func cameraSettings(from call: CAPPluginCall) -> CameraSettings {
+        var settings = CameraSettings()
+
+        settings.jpegQuality = min(abs(CGFloat(call.getFloat("quality") ?? 100.0)) / 100.0, 1.0)
+        settings.source = CameraSource(rawValue: defaultSource.rawValue) ?? defaultSource
+        settings.direction = CameraDirection(rawValue: defaultDirection.rawValue) ?? defaultDirection
+        settings.saveToGallery = call.getBool("saveToGallery") ?? false
+        settings.limit = call.getInt("limit", 0)
+
+        if let typeString = call.getString("resultType"), let type = CameraResultType(rawValue: typeString) {
+          settings.resultType = type
+        }
+
+        settings.userPromptText = CameraPromptText(title: call.getString("promptLabelHeader"),
+                                                 photoAction: call.getString("promptLabelPhoto"),
+                                                 cameraAction: call.getString("promptLabelPicture"),
+                                                 cancelAction: call.getString("promptLabelCancel"))
+
+        return settings
+    }
+
 }
 
 
