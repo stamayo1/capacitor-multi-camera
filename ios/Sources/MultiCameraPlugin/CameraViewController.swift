@@ -25,6 +25,9 @@ class CameraViewController: UIViewController {
     private var currentInput: AVCaptureDeviceInput?
 
     private var capturedImages: [UIImage] = []
+    
+    // MARK: - UI PreView pictures
+    private var thumbnailsCollection: UICollectionView!
 
     // MARK: - UI Elements
     private let closeButton: UIButton = {
@@ -133,9 +136,11 @@ class CameraViewController: UIViewController {
         do {
             currentDevice = device
             let input = try AVCaptureDeviceInput(device: device)
+
             if let currentInput = currentInput {
                 captureSession.removeInput(currentInput)
             }
+
             if captureSession.canAddInput(input) {
                 captureSession.addInput(input)
                 currentInput = input
@@ -152,9 +157,15 @@ class CameraViewController: UIViewController {
         layout.scrollDirection = .horizontal
         layout.itemSize = CGSize(width: 100, height: 100)
         layout.minimumInteritemSpacing = 12
+        
+        thumbnailsCollection = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        thumbnailsCollection.backgroundColor = .clear
+        thumbnailsCollection.showsHorizontalScrollIndicator = false
+        thumbnailsCollection.register(ThumbnailCell.self, forCellWithReuseIdentifier: "cell")
+        thumbnailsCollection.dataSource = self
 
         // Agregar subviews
-        [closeButton, torchButton, captureButton, confirmButton, switchCameraButton, zoomButton]
+        [closeButton, torchButton, captureButton, confirmButton, switchCameraButton, zoomButton, thumbnailsCollection]
             .forEach { view.addSubview($0) }
 
         // AutoLayout
@@ -164,6 +175,7 @@ class CameraViewController: UIViewController {
         confirmButton.translatesAutoresizingMaskIntoConstraints = false
         switchCameraButton.translatesAutoresizingMaskIntoConstraints = false
         zoomButton.translatesAutoresizingMaskIntoConstraints = false
+        thumbnailsCollection.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
@@ -185,7 +197,13 @@ class CameraViewController: UIViewController {
             confirmButton.trailingAnchor.constraint(equalTo: captureButton.leadingAnchor, constant: -50),
             confirmButton.widthAnchor.constraint(equalToConstant: 60),
             confirmButton.heightAnchor.constraint(equalToConstant: 60),
-
+            
+            /// MARK: - Thumbails to preview pictures
+            thumbnailsCollection.bottomAnchor.constraint(equalTo: captureButton.topAnchor, constant: -60),
+            thumbnailsCollection.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            thumbnailsCollection.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            thumbnailsCollection.heightAnchor.constraint(equalToConstant: 100),
+            
             switchCameraButton.centerYAnchor.constraint(equalTo: captureButton.centerYAnchor),
             switchCameraButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             switchCameraButton.widthAnchor.constraint(equalToConstant: 40),
@@ -266,10 +284,6 @@ class CameraViewController: UIViewController {
             print("Zoom error: \(error)")
         }
     }
-
-    @objc private func cancel() {
-        delegate?.cameraDidCancel()
-    }
 }
 
 // MARK: - AVCapturePhotoCaptureDelegate
@@ -288,8 +302,42 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
            let image = UIImage(data: data) {
             capturedImages.append(image)
             
+            // Refresh the thumbnails collection so the new photo appears in the carousel
+            thumbnailsCollection.reloadData()
             confirmButton.isHidden = capturedImages.isEmpty
         }
     }
 }
 
+// MARK: - UICollectionViewDataSource
+extension CameraViewController: UICollectionViewDataSource {
+    
+    /// Returns the number of thumbnails to display in the collection.
+    /// In this case, it matches the total number of captured images.
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return capturedImages.count
+    }
+    
+    /// Configures and returns the cell for a given index in the collection.
+    /// - Parameters:
+    ///   - collectionView: The collection view requesting the cell.
+    ///   - indexPath: The position (index) of the cell in the section.
+    /// - Returns: A `ThumbnailCell` configured with the corresponding image.
+    func collectionView(_ collectionView: UICollectionView,
+                        cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! ThumbnailCell
+        let image = capturedImages[indexPath.item]
+        cell.configure(with: image)
+
+        cell.onRemove = { [weak self] in
+            guard let self = self else { return }
+            self.capturedImages.remove(at: indexPath.item)
+            self.thumbnailsCollection.reloadData()
+            
+            // Hide confirm button if no images remain
+            self.confirmButton.isHidden = self.capturedImages.isEmpty
+        }
+
+        return cell
+    }
+}
