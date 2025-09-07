@@ -33,6 +33,7 @@ public struct CameraSettings {
     var resultType : CameraResultType = CameraResultType.uri
     var jpegQuality : CGFloat = 1.0
     var userPromptText = CameraPromptText()
+    var limit : Int = 0
     
     var width: CGFloat = 0
     var height: CGFloat = 0

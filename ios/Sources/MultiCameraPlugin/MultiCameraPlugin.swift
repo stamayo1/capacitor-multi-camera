@@ -18,20 +18,50 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "checkPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "pickImages", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "capture", returnType: CAPPluginReturnPromise),
     ]
     
     // Variables
     private var call : CAPPluginCall?
     private var settings = CameraSettings()
     
+    // Camera View Controller
+    private var cameraVC: CameraViewController?
+    
     // Constants
     private let defaultSource = CameraSource.prompt
     private let defaultDirection = CameraDirection.rear
     private let implementation = MultiCamera()
     
+    @objc func capture(_ call: CAPPluginCall) {
+        self.call = call
+        self.settings = cameraSettings(from: call)
+
+        // Make sure they have all the necessary info.plist settings
+        if let missingUsageDescription = implementation.checkUsageDescriptions() {
+            CAPLog.print("⚡️ ", self.pluginId, "-", missingUsageDescription)
+            call.reject(missingUsageDescription)
+            return
+        }
+    
+        
+        DispatchQueue.main.async {
+            let vc = CameraViewController()
+            vc.modalPresentationStyle = .fullScreen
+            vc.resultType = self.settings.resultType
+            vc.saveToGallery = self.settings.saveToGallery
+            vc.delegate = self
+
+            self.bridge?.viewController?.present(vc, animated: true, completion: nil)
+            self.cameraVC = vc
+        }
+        
+    }
+    
     
     @objc func pickImages(_ call: CAPPluginCall) {
         self.call = call
+        self.settings = cameraSettings(from: call)
 
         // Make sure they have all the necessary info.plist settings
         if let missingUsageDescription = implementation.checkUsageDescriptions() {
@@ -42,7 +72,7 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
        
         DispatchQueue.main.async {
             var config = PHPickerConfiguration(photoLibrary: .shared())
-            config.selectionLimit = call.getInt("limit") ?? 0 // 0 = unlimited, or set X for a max limit
+            config.selectionLimit = self.settings.limit
             config.filter = .images
             
             let picker = PHPickerViewController(configuration: config)
@@ -82,7 +112,7 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
     ///   - saveToGallery: Whether the photo should also be stored in the device’s gallery.
     /// - Returns: A `[String: Any]` dictionary containing the photo data and metadata.
     private func makePhotoResult(from image: UIImage,
-                                 resultType: String,
+                                 resultType: CameraResultType,
                                  saveToGallery: Bool) -> [String: Any] {
         var result: [String: Any] = [:]
         var saved = false
@@ -93,7 +123,7 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         if let data = image.jpegData(compressionQuality: settings.jpegQuality) {
-            switch resultType {
+            switch resultType.rawValue {
                 case "base64":
                     result["base64String"] = data.base64EncodedString()
 
@@ -127,6 +157,29 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
 
         return result
     }
+    
+    ///  Set up  global config
+    private func cameraSettings(from call: CAPPluginCall) -> CameraSettings {
+        var settings = CameraSettings()
+
+        settings.jpegQuality = min(abs(CGFloat(call.getFloat("quality") ?? 100.0)) / 100.0, 1.0)
+        settings.source = CameraSource(rawValue: defaultSource.rawValue) ?? defaultSource
+        settings.direction = CameraDirection(rawValue: defaultDirection.rawValue) ?? defaultDirection
+        settings.saveToGallery = call.getBool("saveToGallery") ?? false
+        settings.limit = call.getInt("limit", 0)
+
+        if let typeString = call.getString("resultType"), let type = CameraResultType(rawValue: typeString) {
+          settings.resultType = type
+        }
+
+        settings.userPromptText = CameraPromptText(title: call.getString("promptLabelHeader"),
+                                                 photoAction: call.getString("promptLabelPhoto"),
+                                                 cameraAction: call.getString("promptLabelPicture"),
+                                                 cancelAction: call.getString("promptLabelCancel"))
+
+        return settings
+    }
+
 }
 
 
@@ -154,7 +207,7 @@ extension MultiCameraPlugin: PHPickerViewControllerDelegate {
                     
                     if let image = reading as? UIImage {
                         let photo = self.makePhotoResult(from: image,
-                                                         resultType: "uri", // always URI for gallery
+                                                         resultType: CameraResultType.uri, // always URI for gallery
                                                          saveToGallery: false)
                         photos.append(photo)
                     }
@@ -167,4 +220,48 @@ extension MultiCameraPlugin: PHPickerViewControllerDelegate {
             self.call = nil
         }
     }
+}
+
+
+// MARK: - CameraDelegate Implementation
+extension MultiCameraPlugin: CameraDelegate {
+ 
+     /// Called when the user finishes capturing photos in the camera UI.
+     ///
+     /// - Parameters:
+     ///   - images: An array of `UIImage` objects representing all photos taken in the session.
+     ///   - resultType: The requested format for returning the photos (`base64`, `dataUrl`, or `uri`).
+     ///   - saveToGallery: Whether the photos should also be saved to the device’s Photos/Gallery.
+     ///
+     /// The method converts each `UIImage` into the expected result format and resolves
+     /// the Capacitor plugin call with an array of photo dictionaries.
+     func cameraDidFinish(images: [UIImage], resultType: CameraResultType, saveToGallery: Bool) {
+         var photos: [[String: Any]] = []
+         
+         // Convert each UIImage into the plugin's return structure
+         for image in images {
+             let photo = makePhotoResult(from: image,
+                                         resultType: resultType,
+                                         saveToGallery: saveToGallery)
+             photos.append(photo)
+         }
+         
+         // Return all processed photos back to JavaScript
+         call?.resolve(["photos": photos])
+         
+         // Dismiss the native camera UI
+         cameraVC?.dismiss(animated: true)
+         cameraVC = nil
+     }
+
+     /// Called when the user cancels the camera session.
+     ///
+     /// Rejects the plugin call with a "User cancelled" message and closes the camera UI.
+     func cameraDidCancel() {
+         let error = ErrorHandled.userCancelled
+         call?.reject(error.missingMessage, error.rawValue)
+         cameraVC?.dismiss(animated: true)
+         cameraVC = nil
+     }
+
 }
