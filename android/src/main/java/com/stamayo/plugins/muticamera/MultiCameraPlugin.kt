@@ -52,12 +52,11 @@ class MultiCameraPlugin : Plugin() {
     private val implementation = MultiCamera()
 
     @PluginMethod
-    fun echo(call: PluginCall) {
-        val value = call.getString("value")
-
-        val ret = JSObject()
-        ret.put("value", implementation.echo(value ?: ""))
-        call.resolve(ret)
+    override fun checkPermissions(call: PluginCall) {
+        val result = JSObject()
+        result.put("camera", getPermissionState("camera").toString())
+        result.put("photos", getPhotosPermissionState())
+        call.resolve(result)
     }
 
 
@@ -91,30 +90,24 @@ class MultiCameraPlugin : Plugin() {
         call.resolve(result)
     }
 
+
     private fun getPhotosPermissionState(): String {
         val sdk = android.os.Build.VERSION.SDK_INT
 
         return when {
             sdk >= Build.VERSION_CODES.TIRAMISU -> {
-                if (isPermissionGranted(Manifest.permission.READ_MEDIA_IMAGES)) "granted" else "denied"
+                // sdk >= Android 13+ (33)
+                return getPermissionState(MultiCameraPlugin.PHOTOS_ALIAS).toString()
             }
             sdk >= Build.VERSION_CODES.S && sdk <= Build.VERSION_CODES.S_V2 -> {
-                if (isPermissionGranted(Manifest.permission.READ_EXTERNAL_STORAGE)) "granted"
-                else "denied"
+                // sdk >= Android 12 (31)  sdk <= Android 12 (32)
+                return getPermissionState(MultiCameraPlugin.READ_EXTERNAL_ALIAS).toString()
             }
             else -> {
-                if (isPermissionGranted(Manifest.permission.READ_EXTERNAL_STORAGE) && isPermissionGranted(
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    )) "granted"
-                else "denied"
+                // sdk <= Android 11+ (29)
+                return getPermissionState(MultiCameraPlugin.SAVE_GALLERY).toString()
             }
         }
     }
 
-    private fun isPermissionGranted(permission: String): Boolean {
-        return ContextCompat.checkSelfPermission(
-            context,
-            permission
-        ) == PackageManager.PERMISSION_GRANTED
-    }
 }
