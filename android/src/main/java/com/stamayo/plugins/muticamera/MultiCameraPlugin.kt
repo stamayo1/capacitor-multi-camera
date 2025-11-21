@@ -199,16 +199,16 @@ class MultiCameraPlugin : Plugin() {
 
         limitedUris.forEach { uri ->
             val cached = implementation.copyToCache(context, uri, captureSettings.quality)
-            val photo = JSObject().apply {
-                put("path", cached.toURI().toString())
-                bridge.localUrlForFullPath(cached.absolutePath)?.let { webPath ->
-                    put("webPath", webPath)
+                val photo = JSObject().apply {
+                    put("path", cached.toURI().toString())
+                    bridge.localUrlForFullPath(cached.absolutePath)?.let { webPath ->
+                        put("webPath", webPath)
+                    }
+                    put("format", "jpeg")
+                    put("exif", true as Boolean)
                 }
-                put("format", "jpeg")
-                put("exif", true)
+                photos.put(photo)
             }
-            photos.put(photo)
-        }
 
         val payload = JSObject().apply { put("photos", photos) }
         call.resolve(payload)

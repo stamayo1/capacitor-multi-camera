@@ -60,7 +60,7 @@ class MultiCamera(private val bridge: Bridge) {
 
         result.put("format", "jpeg")
         result.put("saved", saved)
-        result.put("exif", true)
+        result.put("exif", true as Boolean)
         return result
     }
 
