@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btn_close"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:backgroundTint="#66000000"
+        android:background="@android:color/transparent"
+        android:contentDescription="Close"
+        android:padding="6dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        app:tint="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintMarginTop="16dp"
+        app:layout_constraintMarginStart="16dp" />
+
+    <ImageButton
+        android:id="@+id/btn_torch"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:backgroundTint="#66000000"
+        android:background="@android:color/transparent"
+        android:contentDescription="Toggle flash"
+        android:padding="6dp"
+        android:src="@android:drawable/ic_menu_camera"
+        app:tint="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintMarginTop="16dp"
+        app:layout_constraintMarginEnd="16dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/thumbnails"
+        android:layout_width="0dp"
+        android:layout_height="100dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:clipToPadding="false"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btn_capture"
+        app:layout_constraintMarginBottom="40dp" />
+
+    <ImageButton
+        android:id="@+id/btn_switch_camera"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:backgroundTint="#66000000"
+        android:background="@android:color/transparent"
+        android:contentDescription="Switch camera"
+        android:padding="6dp"
+        android:src="@android:drawable/ic_menu_rotate"
+        app:tint="@android:color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
+        app:layout_constraintMarginEnd="20dp" />
+
+    <Button
+        android:id="@+id/btn_zoom"
+        android:layout_width="60dp"
+        android:layout_height="40dp"
+        android:backgroundTint="#66000000"
+        android:text="1x"
+        android:textColor="@android:color/white"
+        app:layout_constraintEnd_toEndOf="@+id/btn_switch_camera"
+        app:layout_constraintBottom_toTopOf="@+id/btn_switch_camera"
+        app:layout_constraintMarginBottom="12dp" />
+
+    <ImageButton
+        android:id="@+id/btn_confirm"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:backgroundTint="#66000000"
+        android:background="@android:color/transparent"
+        android:contentDescription="Confirm"
+        android:padding="8dp"
+        android:src="@android:drawable/ic_menu_save"
+        android:visibility="gone"
+        app:tint="@android:color/white"
+        app:layout_constraintEnd_toStartOf="@+id/btn_capture"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
+        app:layout_constraintMarginEnd="40dp" />
+
+    <ImageButton
+        android:id="@+id/btn_capture"
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:backgroundTint="@android:color/white"
+        android:background="@android:color/white"
+        android:contentDescription="Capture"
+        android:padding="4dp"
+        android:scaleType="center"
+        android:src="@android:drawable/ic_menu_camera"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/thumbnails"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintMarginBottom="24dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
