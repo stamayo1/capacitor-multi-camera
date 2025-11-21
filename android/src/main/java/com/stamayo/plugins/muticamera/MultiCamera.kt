@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.MediaStore
 import android.util.Base64
 import com.getcapacitor.Bridge
+import com.getcapacitor.FileUtils
 import com.getcapacitor.JSObject
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -52,7 +53,7 @@ class MultiCamera(private val bridge: Bridge) {
             }
             CameraResultType.URI -> {
                 result.put("path", adjustedFile.toURI().toString())
-                bridge.localUrlForFullPath(adjustedFile.absolutePath)?.let { webPath ->
+                getWebPath(adjustedFile)?.let { webPath ->
                     result.put("webPath", webPath)
                 }
             }
@@ -126,5 +127,10 @@ class MultiCamera(private val bridge: Bridge) {
 
     private fun InputStream.toBitmap(): Bitmap {
         return BitmapFactory.decodeStream(this)
+    }
+
+    private fun getWebPath(file: File): String? {
+        val host = bridge.localUrl ?: bridge.serverUrl ?: return null
+        return FileUtils.getPortablePath(bridge.context, host, Uri.fromFile(file))
     }
 }

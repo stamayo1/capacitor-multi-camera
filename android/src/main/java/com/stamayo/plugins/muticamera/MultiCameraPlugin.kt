@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import com.getcapacitor.FileUtils
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -199,16 +200,16 @@ class MultiCameraPlugin : Plugin() {
 
         limitedUris.forEach { uri ->
             val cached = implementation.copyToCache(context, uri, captureSettings.quality)
-                val photo = JSObject().apply {
-                    put("path", cached.toURI().toString())
-                    bridge.localUrlForFullPath(cached.absolutePath)?.let { webPath ->
-                        put("webPath", webPath)
-                    }
-                    put("format", "jpeg")
-                    put("exif", true as Boolean)
+            val photo = JSObject().apply {
+                put("path", cached.toURI().toString())
+                getWebPath(cached)?.let { webPath ->
+                    put("webPath", webPath)
                 }
-                photos.put(photo)
+                put("format", "jpeg")
+                put("exif", true)
             }
+            photos.put(photo)
+        }
 
         val payload = JSObject().apply { put("photos", photos) }
         call.resolve(payload)
@@ -232,9 +233,9 @@ class MultiCameraPlugin : Plugin() {
 
     private fun PluginCall.toCaptureSettings(): CaptureSettings {
         val type = CameraResultType.from(getString("resultType"))
-        val saveToGallery = getBoolean("saveToGallery", false)
-        val quality = getInt("quality", 100).coerceIn(0, 100)
-        val limit = getInt("limit", 0)
+        val saveToGallery = getBoolean("saveToGallery") ?: false
+        val quality = (getInt("quality") ?: 100).coerceIn(0, 100)
+        val limit = getInt("limit") ?: 0
 
         return CaptureSettings(
             resultType = type,
@@ -242,5 +243,10 @@ class MultiCameraPlugin : Plugin() {
             quality = quality,
             limit = limit,
         )
+    }
+
+    private fun getWebPath(file: File): String? {
+        val host = bridge.localUrl ?: bridge.serverUrl ?: return null
+        return FileUtils.getPortablePath(context, host, Uri.fromFile(file))
     }
 }
