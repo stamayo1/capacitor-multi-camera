@@ -64,10 +64,10 @@ class MultiCameraActivity : ComponentActivity() {
     }
 
     private fun setupThumbnails() {
-        adapter = ThumbnailAdapter(capturedFiles) { file ->
-            capturedFiles.remove(file)
+        adapter = ThumbnailAdapter(capturedFiles) { position, file ->
+            capturedFiles.removeAt(position)
             file.delete()
-            adapter.notifyDataSetChanged()
+            adapter.notifyItemRemoved(position)
             confirmButton.visibility = if (capturedFiles.isEmpty()) View.GONE else View.VISIBLE
         }
         thumbnails.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -121,9 +121,10 @@ class MultiCameraActivity : ComponentActivity() {
             cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    capturedFiles.add(photoFile)
+                    capturedFiles.add(0, photoFile)
                     runOnUiThread {
-                        adapter.notifyDataSetChanged()
+                        adapter.notifyItemInserted(0)
+                        thumbnails.scrollToPosition(0)
                         confirmButton.visibility = View.VISIBLE
                     }
                 }
