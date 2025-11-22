@@ -38,6 +38,7 @@ class MultiCameraActivity : ComponentActivity() {
 
     private val capturedFiles = mutableListOf<File>()
     private lateinit var adapter: ThumbnailAdapter
+    private var hasConfirmedResult = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +65,7 @@ class MultiCameraActivity : ComponentActivity() {
     private fun setupThumbnails() {
         adapter = ThumbnailAdapter(capturedFiles) { file ->
             capturedFiles.remove(file)
+            file.delete()
             adapter.notifyDataSetChanged()
             confirmButton.visibility = if (capturedFiles.isEmpty()) View.GONE else View.VISIBLE
         }
@@ -160,11 +162,13 @@ class MultiCameraActivity : ComponentActivity() {
     }
 
     private fun finishWithCancel() {
+        cleanupCapturedFiles()
         setResult(Activity.RESULT_CANCELED)
         finish()
     }
 
     private fun finishWithResult() {
+        hasConfirmedResult = true
         val data = Intent()
         data.putExtra("photos", capturedFiles.map { it.absolutePath }.toTypedArray())
         setResult(Activity.RESULT_OK, data)
@@ -176,5 +180,16 @@ class MultiCameraActivity : ComponentActivity() {
         if (::cameraExecutor.isInitialized) {
             cameraExecutor.shutdown()
         }
+
+        if (!hasConfirmedResult) {
+            cleanupCapturedFiles()
+        }
+    }
+
+    private fun cleanupCapturedFiles() {
+        capturedFiles.forEach { file ->
+            file.delete()
+        }
+        capturedFiles.clear()
     }
 }
