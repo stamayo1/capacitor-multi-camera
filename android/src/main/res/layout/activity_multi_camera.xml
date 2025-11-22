@@ -26,7 +26,7 @@
         app:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="30dp"
         android:layout_marginStart="16dp" />
 
     <ImageButton
@@ -41,7 +41,7 @@
         app:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="30dp"
         android:layout_marginEnd="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -70,17 +70,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
         android:layout_marginEnd="20dp" />
-
-    <Button
-        android:id="@+id/btn_zoom"
-        android:layout_width="60dp"
-        android:layout_height="40dp"
-        android:backgroundTint="#66000000"
-        android:text="1x"
-        android:textColor="@android:color/white"
-        app:layout_constraintEnd_toEndOf="@+id/btn_switch_camera"
-        app:layout_constraintBottom_toTopOf="@+id/btn_switch_camera"
-        android:layout_marginBottom="12dp" />
 
     <ImageButton
         android:id="@+id/btn_confirm"

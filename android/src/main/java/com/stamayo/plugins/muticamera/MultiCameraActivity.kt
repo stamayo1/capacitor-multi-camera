@@ -29,7 +29,6 @@ class MultiCameraActivity : ComponentActivity() {
     private lateinit var confirmButton: ImageButton
     private lateinit var torchButton: ImageButton
     private lateinit var switchCameraButton: ImageButton
-    private lateinit var zoomButton: Button
     private lateinit var thumbnails: RecyclerView
 
     private var camera: Camera? = null
@@ -59,7 +58,6 @@ class MultiCameraActivity : ComponentActivity() {
         confirmButton = findViewById(R.id.btn_confirm)
         torchButton = findViewById(R.id.btn_torch)
         switchCameraButton = findViewById(R.id.btn_switch_camera)
-        zoomButton = findViewById(R.id.btn_zoom)
         thumbnails = findViewById(R.id.thumbnails)
     }
 
@@ -79,7 +77,6 @@ class MultiCameraActivity : ComponentActivity() {
         captureButton.setOnClickListener { capturePhoto() }
         switchCameraButton.setOnClickListener { toggleCamera() }
         torchButton.setOnClickListener { toggleTorch() }
-        zoomButton.setOnClickListener { showZoomOptions() }
     }
 
     private fun startCamera() {
@@ -175,7 +172,6 @@ class MultiCameraActivity : ComponentActivity() {
             level.coerceIn(state.minZoomRatio, state.maxZoomRatio)
         } ?: level
         control.setZoomRatio(clamped)
-        zoomButton.text = String.format("%.1fx", clamped)
     }
 
     private fun finishWithCancel() {
