@@ -32,6 +32,8 @@ data class CaptureSettings(
     val saveToGallery: Boolean = false,
     val quality: Int = 100,
     val limit: Int = 0,
+    val width: Int = 0,
+    val height: Int = 0,
 )
 
 class MultiCamera(private val bridge: Bridge) {
@@ -65,13 +67,14 @@ class MultiCamera(private val bridge: Bridge) {
         return result
     }
 
-    fun copyToCache(context: Context, uri: Uri, quality: Int): File {
+    fun copyToCache(context: Context, uri: Uri, settings: CaptureSettings): File {
         val file = File.createTempFile("gallery_photo_", ".jpg", context.cacheDir)
         val stream = context.contentResolver.openInputStream(uri) ?: return file
         stream.use { input ->
             val bitmap = input.toBitmap()
+            val scaled = bitmap.scaleIfNeeded(settings.width, settings.height)
             FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+                scaled.compress(Bitmap.CompressFormat.JPEG, settings.quality, out)
             }
         }
         return file
@@ -127,6 +130,28 @@ class MultiCamera(private val bridge: Bridge) {
 
     private fun InputStream.toBitmap(): Bitmap {
         return BitmapFactory.decodeStream(this)
+    }
+
+    private fun Bitmap.scaleIfNeeded(maxWidth: Int, maxHeight: Int): Bitmap {
+        if (maxWidth <= 0 && maxHeight <= 0) return this
+
+        val aspectRatio = width.toFloat() / height.toFloat()
+
+        val targetWidth = when {
+            maxWidth > 0 -> maxWidth
+            maxHeight > 0 -> (maxHeight * aspectRatio).toInt()
+            else -> width
+        }
+
+        val targetHeight = when {
+            maxHeight > 0 -> maxHeight
+            maxWidth > 0 -> (maxWidth / aspectRatio).toInt()
+            else -> height
+        }
+
+        if (targetWidth >= width && targetHeight >= height) return this
+
+        return Bitmap.createScaledBitmap(this, targetWidth, targetHeight, true)
     }
 
     private fun getWebPath(file: File): String? {

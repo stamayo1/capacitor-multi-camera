@@ -198,16 +198,15 @@ class MultiCameraPlugin : Plugin() {
         }
         val photos = JSArray()
 
+        val gallerySettings = captureSettings.copy(
+            resultType = CameraResultType.URI,
+            saveToGallery = false,
+        )
+
         limitedUris.forEach { uri ->
-            val cached = implementation.copyToCache(context, uri, captureSettings.quality)
-            val photo = JSObject().apply {
-                put("path", cached.toURI().toString())
-                getWebPath(cached)?.let { webPath ->
-                    put("webPath", webPath)
-                }
-                put("format", "jpeg")
-                put("exif", true)
-            }
+            val cached = implementation.copyToCache(context, uri, gallerySettings)
+            val photo = implementation.buildPhotoResult(cached, gallerySettings)
+            photo.put("saved", false)
             photos.put(photo)
         }
 
@@ -236,12 +235,16 @@ class MultiCameraPlugin : Plugin() {
         val saveToGallery = getBoolean("saveToGallery") ?: false
         val quality = (getInt("quality") ?: 100).coerceIn(0, 100)
         val limit = getInt("limit") ?: 0
+        val width = getInt("width") ?: 0
+        val height = getInt("height") ?: 0
 
         return CaptureSettings(
             resultType = type,
             saveToGallery = saveToGallery,
             quality = quality,
             limit = limit,
+            width = width,
+            height = height,
         )
     }
 
