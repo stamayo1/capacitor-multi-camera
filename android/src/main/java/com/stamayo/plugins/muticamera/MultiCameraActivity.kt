@@ -5,7 +5,6 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
 import android.widget.ImageButton
 import androidx.activity.ComponentActivity
 import androidx.camera.core.Camera
@@ -27,7 +26,7 @@ class MultiCameraActivity : ComponentActivity() {
     private lateinit var previewView: PreviewView
     private lateinit var captureButton: ImageButton
     private lateinit var closeButton: ImageButton
-    private lateinit var confirmButton: Button
+    private lateinit var confirmButton: ImageButton
     private lateinit var torchButton: ImageButton
     private lateinit var switchCameraButton: ImageButton
     private lateinit var zoomButton: Button

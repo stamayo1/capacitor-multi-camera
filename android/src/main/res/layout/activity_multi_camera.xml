@@ -26,7 +26,7 @@
         app:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:layout_marginStart="16dp" />
 
     <ImageButton
@@ -41,7 +41,7 @@
         app:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -82,14 +82,15 @@
         app:layout_constraintBottom_toTopOf="@+id/btn_switch_camera"
         android:layout_marginBottom="12dp" />
 
-    <Button
+    <ImageButton
         android:id="@+id/btn_confirm"
-        android:layout_width="70dp"
-        android:layout_height="48dp"
-        android:backgroundTint="#66000000"
-        android:text="OK"
-        android:textAllCaps="false"
-        android:textColor="@android:color/white"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/control_button_background"
+        android:contentDescription="Confirm"
+        android:padding="12dp"
+        android:src="@drawable/ic_check"
+        app:tint="@android:color/white"
         android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@+id/btn_capture"
         app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
@@ -99,8 +100,7 @@
         android:id="@+id/btn_capture"
         android:layout_width="84dp"
         android:layout_height="84dp"
-        android:backgroundTint="@android:color/white"
-        android:background="@android:color/white"
+        android:background="@drawable/capture_button_background"
         android:contentDescription="Capture"
         android:padding="4dp"
         android:scaleType="center"
