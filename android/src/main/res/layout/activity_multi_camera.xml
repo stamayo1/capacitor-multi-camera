@@ -55,7 +55,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btn_capture"
-        android:layout_marginBottom="40dp" />
+        android:layout_marginBottom="16dp" />
 
     <ImageButton
         android:id="@+id/btn_switch_camera"
@@ -82,20 +82,18 @@
         app:layout_constraintBottom_toTopOf="@+id/btn_switch_camera"
         android:layout_marginBottom="12dp" />
 
-    <ImageButton
+    <Button
         android:id="@+id/btn_confirm"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="70dp"
+        android:layout_height="48dp"
         android:backgroundTint="#66000000"
-        android:background="@android:color/transparent"
-        android:contentDescription="Confirm"
-        android:padding="8dp"
-        android:src="@android:drawable/ic_menu_save"
+        android:text="OK"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
         android:visibility="gone"
-        app:tint="@android:color/white"
         app:layout_constraintEnd_toStartOf="@+id/btn_capture"
         app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
-        android:layout_marginEnd="40dp" />
+        android:layout_marginEnd="32dp" />
 
     <ImageButton
         android:id="@+id/btn_capture"
@@ -108,7 +106,6 @@
         android:scaleType="center"
         android:src="@android:drawable/ic_menu_camera"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/thumbnails"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="24dp" />

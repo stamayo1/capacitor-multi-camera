@@ -27,7 +27,7 @@ class MultiCameraActivity : ComponentActivity() {
     private lateinit var previewView: PreviewView
     private lateinit var captureButton: ImageButton
     private lateinit var closeButton: ImageButton
-    private lateinit var confirmButton: ImageButton
+    private lateinit var confirmButton: Button
     private lateinit var torchButton: ImageButton
     private lateinit var switchCameraButton: ImageButton
     private lateinit var zoomButton: Button
