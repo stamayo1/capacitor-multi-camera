@@ -18,8 +18,8 @@ window.testPickImages = async () => {
     try {
         
         const result = await Camera.pickImages({ 
-            limit: 5,
-            quality: 90
+            limit: 15,
+            quality: 60
         });
     
         const container = document.getElementById("container");
@@ -53,8 +53,8 @@ window.testCapture = async () => {
     try {
         const result = await Camera.capture({ 
             resultType: "uri",
-            saveToGallery: true,
-            quality: 0.8
+            saveToGallery: false,
+            quality: 0.6
         });
     
         const container = document.getElementById("container");
