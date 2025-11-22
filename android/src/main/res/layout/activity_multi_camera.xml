@@ -26,7 +26,7 @@
         app:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="40dp"
         android:layout_marginStart="16dp" />
 
     <ImageButton
@@ -41,7 +41,7 @@
         app:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="40dp"
         android:layout_marginEnd="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -55,7 +55,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btn_capture"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="30dp" />
 
     <ImageButton
         android:id="@+id/btn_switch_camera"
@@ -69,7 +69,8 @@
         app:tint="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
-        android:layout_marginEnd="20dp" />
+        android:layout_marginEnd="20dp" 
+        android:layout_marginBottom="15dp" />
 
     <ImageButton
         android:id="@+id/btn_confirm"
@@ -83,7 +84,8 @@
         android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@+id/btn_capture"
         app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
-        android:layout_marginEnd="32dp" />
+        android:layout_marginEnd="40dp" 
+        android:layout_marginBottom="15dp" />
 
     <ImageButton
         android:id="@+id/btn_capture"
