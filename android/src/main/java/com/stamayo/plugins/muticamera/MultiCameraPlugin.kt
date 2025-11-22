@@ -19,6 +19,7 @@ import com.getcapacitor.annotation.CapacitorPlugin
 import com.getcapacitor.annotation.Permission
 import com.getcapacitor.annotation.PermissionCallback
 import java.io.File
+import java.util.concurrent.Executors
 
 @CapacitorPlugin(
     name = "Camera",
@@ -189,22 +190,49 @@ class MultiCameraPlugin : Plugin() {
             call.reject("No images selected")
             return
         }
-        val photos = JSArray()
 
-        val gallerySettings = captureSettings.copy(
-            resultType = CameraResultType.URI,
-            saveToGallery = false,
-        )
-
-        uris.forEach { uri ->
-            val cached = implementation.copyToCache(context, uri, gallerySettings)
-            val photo = implementation.buildPhotoResult(cached, gallerySettings)
-            photo.put("saved", false)
-            photos.put(photo)
+        val executor = Executors.newSingleThreadExecutor()
+        val selectedUris = if (captureSettings.limit > 0) {
+            uris.take(captureSettings.limit)
+        } else {
+            uris
         }
 
-        val response = JSObject().apply { put("photos", photos) }
-        call.resolve(response)
+        executor.execute {
+            val result = runCatching {
+                val photos = JSArray()
+
+                val gallerySettings = captureSettings.copy(
+                    resultType = CameraResultType.URI,
+                    saveToGallery = false,
+                )
+
+                selectedUris.forEach { uri ->
+                    val cached = implementation.copyToCache(context, uri, gallerySettings)
+                    val photo = implementation.buildPhotoResult(cached, gallerySettings)
+                    photo.put("saved", false)
+                    photos.put(photo)
+                }
+
+                JSObject().apply { put("photos", photos) }
+            }
+
+            val deliverResult = Runnable {
+                result.onSuccess { response ->
+                    call.resolve(response)
+                }.onFailure { error ->
+                    call.reject(error.localizedMessage ?: "Failed to process images")
+                }
+            }
+
+            val activity = bridge.activity
+            if (activity != null) {
+                activity.runOnUiThread(deliverResult)
+            } else {
+                deliverResult.run()
+            }
+            executor.shutdown()
+        }
     }
 
     private fun getPhotosPermissionState(): String {
