@@ -246,6 +246,7 @@ class CameraViewController: UIViewController {
     }
 
     @objc private func capturePhoto() {
+        animateCaptureFeedback()
         let settings = AVCapturePhotoSettings()
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
@@ -300,11 +301,44 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         if let data = photo.fileDataRepresentation(),
            // Try to convert that data into a UIImage
            let image = UIImage(data: data) {
-            capturedImages.append(image)
-            
-            // Refresh the thumbnails collection so the new photo appears in the carousel
-            thumbnailsCollection.reloadData()
+            capturedImages.insert(image, at: 0)
+
+            thumbnailsCollection.performBatchUpdates({
+                thumbnailsCollection.insertItems(at: [IndexPath(item: 0, section: 0)])
+            }) { _ in
+                self.thumbnailsCollection.scrollToItem(at: IndexPath(item: 0, section: 0), at: .left, animated: true)
+            }
             confirmButton.isHidden = capturedImages.isEmpty
+        }
+    }
+}
+
+// MARK: - Animations
+private extension CameraViewController {
+    func animateCaptureFeedback() {
+        let flashView = UIView(frame: view.bounds)
+        flashView.backgroundColor = .white
+        flashView.alpha = 0
+        view.addSubview(flashView)
+
+        UIView.animate(withDuration: 0.1, animations: {
+            flashView.alpha = 0.2
+        }) { _ in
+            UIView.animate(withDuration: 0.2, animations: {
+                flashView.alpha = 0
+            }, completion: { _ in
+                flashView.removeFromSuperview()
+            })
+        }
+
+        UIView.animate(withDuration: 0.1, animations: {
+            self.captureButton.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+            self.captureButton.alpha = 0.8
+        }) { _ in
+            UIView.animate(withDuration: 0.2) {
+                self.captureButton.transform = .identity
+                self.captureButton.alpha = 1.0
+            }
         }
     }
 }
