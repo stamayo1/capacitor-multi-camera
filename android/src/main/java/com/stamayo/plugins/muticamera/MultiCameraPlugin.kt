@@ -2,6 +2,7 @@ package com.stamayo.plugins.muticamera
 
 import android.Manifest
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -116,15 +117,24 @@ class MultiCameraPlugin : Plugin() {
             return
         }
 
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
+        val allowMultiple = captureSettings.limit == 0 || captureSettings.limit > 1
+
+        // === Intent para abrir la galería directamente ===
+        val intent = Intent(Intent.ACTION_PICK).apply {
             type = "image/*"
-            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+
+            if (allowMultiple) {
+                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            }
         }
 
-        val chooser = Intent.createChooser(intent, "Select pictures")
-        startActivityForResult(call, chooser, "handleGalleryResult")
+        try {
+            startActivityForResult(call, intent, "handleGalleryResult")
+        } catch (ex: ActivityNotFoundException) {
+            call.reject("Gallery app not found")
+        }
     }
+
 
     @PermissionCallback
     private fun permissionsCallback(call: PluginCall) {
@@ -175,8 +185,7 @@ class MultiCameraPlugin : Plugin() {
         }
         data.data?.let { uris.add(it) }
 
-        val limitedUris = if (captureSettings.limit > 0) uris.take(captureSettings.limit) else uris
-        if (limitedUris.isEmpty()) {
+        if (uris.isEmpty()) {
             call.reject("No images selected")
             return
         }
@@ -187,7 +196,7 @@ class MultiCameraPlugin : Plugin() {
             saveToGallery = false,
         )
 
-        limitedUris.forEach { uri ->
+        uris.forEach { uri ->
             val cached = implementation.copyToCache(context, uri, gallerySettings)
             val photo = implementation.buildPhotoResult(cached, gallerySettings)
             photo.put("saved", false)

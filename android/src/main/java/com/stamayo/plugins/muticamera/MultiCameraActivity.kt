@@ -149,21 +149,6 @@ class MultiCameraActivity : ComponentActivity() {
         startCamera()
     }
 
-    private fun showZoomOptions() {
-        val options = arrayOf("0.5x", "1x", "2x")
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle(R.string.zoom_options)
-            .setItems(options) { _: DialogInterface, index: Int ->
-                val factor = when (index) {
-                    0 -> 0.5f
-                    2 -> 2.0f
-                    else -> 1.0f
-                }
-                setZoom(factor)
-            }
-            .create()
-        dialog.show()
-    }
 
     private fun setZoom(level: Float) {
         val control = camera?.cameraControl ?: return
