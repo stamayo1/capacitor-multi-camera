@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -11,10 +12,10 @@ import android.util.Base64
 import com.getcapacitor.Bridge
 import com.getcapacitor.FileUtils
 import com.getcapacitor.JSObject
+import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.util.UUID
 
 enum class CameraResultType(val raw: String) {
@@ -69,13 +70,10 @@ class MultiCamera(private val bridge: Bridge) {
 
     fun copyToCache(context: Context, uri: Uri, settings: CaptureSettings): File {
         val file = File.createTempFile("gallery_photo_", ".jpg", context.cacheDir)
-        val stream = context.contentResolver.openInputStream(uri) ?: return file
-        stream.use { input ->
-            val bitmap = input.toBitmap()
-            val scaled = bitmap.scaleIfNeeded(settings.width, settings.height)
-            FileOutputStream(file).use { out ->
-                scaled.compress(Bitmap.CompressFormat.JPEG, settings.quality, out)
-            }
+        val bitmap = context.decodeBitmapWithOrientation(uri) ?: return file
+        val scaled = bitmap.scaleIfNeeded(settings.width, settings.height)
+        FileOutputStream(file).use { out ->
+            scaled.compress(Bitmap.CompressFormat.JPEG, settings.quality, out)
         }
         return file
     }
@@ -128,8 +126,41 @@ class MultiCamera(private val bridge: Bridge) {
         return Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
     }
 
-    private fun InputStream.toBitmap(): Bitmap {
-        return BitmapFactory.decodeStream(this)
+    private fun Context.decodeBitmapWithOrientation(uri: Uri): Bitmap? {
+        val bitmap = contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return null
+
+        val orientation = contentResolver.openInputStream(uri)?.use { inputStream ->
+            ExifInterface(inputStream).getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_UNDEFINED,
+            )
+        } ?: ExifInterface.ORIENTATION_UNDEFINED
+
+        return bitmap.applyOrientation(orientation)
+    }
+
+    private fun Bitmap.applyOrientation(orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.preScale(-1f, 1f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.preScale(1f, -1f)
+            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                matrix.preScale(-1f, 1f)
+                matrix.postRotate(90f)
+            }
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                matrix.preScale(-1f, 1f)
+                matrix.postRotate(270f)
+            }
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            else -> return this
+        }
+
+        if (matrix.isIdentity) return this
+
+        return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
     }
 
     private fun Bitmap.scaleIfNeeded(maxWidth: Int, maxHeight: Int): Bitmap {
