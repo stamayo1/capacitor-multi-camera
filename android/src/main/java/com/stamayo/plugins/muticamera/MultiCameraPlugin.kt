@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.activity.result.ActivityResult
 import com.getcapacitor.FileUtils
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
@@ -12,6 +13,7 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.PermissionState
+import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.getcapacitor.annotation.Permission
 import com.getcapacitor.annotation.PermissionCallback
@@ -52,14 +54,10 @@ class MultiCameraPlugin : Plugin() {
         const val PHOTOS_ALIAS = "photos"
         const val SAVE_GALLERY = "saveGallery"
         const val READ_EXTERNAL_ALIAS = "readExternalAlias"
-        private const val REQUEST_CAPTURE = 9911
-        private const val REQUEST_GALLERY = 9912
     }
 
     private lateinit var implementation: MultiCamera
     private var captureSettings: CaptureSettings = CaptureSettings()
-    private var captureCall: PluginCall? = null
-    private var galleryCall: PluginCall? = null
 
     override fun load() {
         super.load()
@@ -93,7 +91,6 @@ class MultiCameraPlugin : Plugin() {
 
     @PluginMethod
     fun capture(call: PluginCall) {
-        captureCall = call
         captureSettings = call.toCaptureSettings()
 
         if (getPermissionState(CAMERA_ALIAS) != PermissionState.GRANTED) {
@@ -107,12 +104,11 @@ class MultiCameraPlugin : Plugin() {
         }
 
         val intent = Intent(context, MultiCameraActivity::class.java)
-        startActivityForResult(call, intent, REQUEST_CAPTURE)
+        startActivityForResult(call, intent, "handleCaptureResult")
     }
 
     @PluginMethod
     fun pickImages(call: PluginCall) {
-        galleryCall = call
         captureSettings = call.toCaptureSettings()
 
         if (getPhotosPermissionState() != "granted") {
@@ -127,7 +123,7 @@ class MultiCameraPlugin : Plugin() {
         }
 
         val chooser = Intent.createChooser(intent, "Select pictures")
-        startActivityForResult(call, chooser, REQUEST_GALLERY)
+        startActivityForResult(call, chooser, "handleGalleryResult")
     }
 
     @PermissionCallback
@@ -138,26 +134,14 @@ class MultiCameraPlugin : Plugin() {
         call.resolve(result)
     }
 
-    override fun handleOnActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.handleOnActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == REQUEST_CAPTURE) {
-            handleCaptureResult(resultCode, data)
-        } else if (requestCode == REQUEST_GALLERY) {
-            handleGalleryResult(resultCode, data)
-        }
-    }
-
-    private fun handleCaptureResult(resultCode: Int, data: Intent?) {
-        val call = captureCall ?: return
-        captureCall = null
-
-        if (resultCode != Activity.RESULT_OK) {
+    @ActivityCallback
+    private fun handleCaptureResult(call: PluginCall, result: ActivityResult) {
+        if (result.resultCode != Activity.RESULT_OK) {
             call.reject("User cancelled")
             return
         }
 
-        val paths = data?.getStringArrayExtra("photos") ?: emptyArray()
+        val paths = result.data?.getStringArrayExtra("photos") ?: emptyArray()
         if (paths.isEmpty()) {
             call.reject("No photos captured")
             return
@@ -170,15 +154,15 @@ class MultiCameraPlugin : Plugin() {
             photos.put(result)
         }
 
-        val result = JSObject().apply { put("photos", photos) }
-        call.resolve(result)
+        val response = JSObject().apply { put("photos", photos) }
+        call.resolve(response)
     }
 
-    private fun handleGalleryResult(resultCode: Int, data: Intent?) {
-        val call = galleryCall ?: return
-        galleryCall = null
+    @ActivityCallback
+    private fun handleGalleryResult(call: PluginCall, result: ActivityResult) {
+        val data = result.data
 
-        if (resultCode != Activity.RESULT_OK || data == null) {
+        if (result.resultCode != Activity.RESULT_OK || data == null) {
             call.reject("User cancelled")
             return
         }
@@ -210,8 +194,8 @@ class MultiCameraPlugin : Plugin() {
             photos.put(photo)
         }
 
-        val result = JSObject().apply { put("photos", photos) }
-        call.resolve(result)
+        val response = JSObject().apply { put("photos", photos) }
+        call.resolve(response)
     }
 
     private fun getPhotosPermissionState(): String {
