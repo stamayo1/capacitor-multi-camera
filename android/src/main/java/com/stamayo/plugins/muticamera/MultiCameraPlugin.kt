@@ -170,8 +170,8 @@ class MultiCameraPlugin : Plugin() {
             photos.put(result)
         }
 
-        val payload = JSObject().apply { put("photos", photos) }
-        call.resolve(payload)
+        val result = JSObject().apply { put("photos", photos) }
+        call.resolve(result)
     }
 
     private fun handleGalleryResult(resultCode: Int, data: Intent?) {
@@ -210,8 +210,8 @@ class MultiCameraPlugin : Plugin() {
             photos.put(photo)
         }
 
-        val payload = JSObject().apply { put("photos", photos) }
-        call.resolve(payload)
+        val result = JSObject().apply { put("photos", photos) }
+        call.resolve(result)
     }
 
     private fun getPhotosPermissionState(): String {
