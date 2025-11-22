@@ -11,7 +11,7 @@ import java.io.File
 
 class ThumbnailAdapter(
     private val items: List<File>,
-    private val onRemove: (File) -> Unit,
+    private val onRemove: (Int, File) -> Unit,
 ) : RecyclerView.Adapter<ThumbnailAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -32,7 +32,12 @@ class ThumbnailAdapter(
         fun bind(file: File) {
             val bitmap = BitmapFactory.decodeFile(file.absolutePath)
             imageView.setImageBitmap(bitmap)
-            removeButton.setOnClickListener { onRemove(file) }
+            removeButton.setOnClickListener {
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onRemove(position, file)
+                }
+            }
         }
     }
 }

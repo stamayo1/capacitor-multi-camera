@@ -70,7 +70,7 @@ class MultiCamera(private val bridge: Bridge) {
 
     fun copyToCache(context: Context, uri: Uri, settings: CaptureSettings): File {
         val file = File.createTempFile("gallery_photo_", ".jpg", context.cacheDir)
-        val bitmap = context.decodeBitmapWithOrientation(uri) ?: return file
+        val bitmap = context.decodeBitmapWithOrientation(uri, settings.width, settings.height) ?: return file
         val scaled = bitmap.scaleIfNeeded(settings.width, settings.height)
         FileOutputStream(file).use { out ->
             scaled.compress(Bitmap.CompressFormat.JPEG, settings.quality, out)
@@ -126,8 +126,21 @@ class MultiCamera(private val bridge: Bridge) {
         return Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
     }
 
-    private fun Context.decodeBitmapWithOrientation(uri: Uri): Bitmap? {
-        val bitmap = contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return null
+    private fun Context.decodeBitmapWithOrientation(uri: Uri, maxWidth: Int = 0, maxHeight: Int = 0): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        contentResolver.openInputStream(uri)?.use { input ->
+            BitmapFactory.decodeStream(input, null, bounds)
+        }
+
+        val inSampleSize = calculateSampleSize(bounds, maxWidth, maxHeight)
+        val options = BitmapFactory.Options().apply {
+            this.inSampleSize = inSampleSize
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+
+        val bitmap = contentResolver.openInputStream(uri)?.use { input ->
+            BitmapFactory.decodeStream(input, null, options)
+        } ?: return null
 
         val orientation = contentResolver.openInputStream(uri)?.use { inputStream ->
             ExifInterface(inputStream).getAttributeInt(
@@ -137,6 +150,26 @@ class MultiCamera(private val bridge: Bridge) {
         } ?: ExifInterface.ORIENTATION_UNDEFINED
 
         return bitmap.applyOrientation(orientation)
+    }
+
+    private fun calculateSampleSize(bounds: BitmapFactory.Options, maxWidth: Int, maxHeight: Int): Int {
+        if (maxWidth <= 0 && maxHeight <= 0) return 1
+
+        val (rawWidth, rawHeight) = bounds.outWidth to bounds.outHeight
+        if (rawWidth <= 0 || rawHeight <= 0) return 1
+
+        val targetWidth = if (maxWidth > 0) maxWidth else rawWidth
+        val targetHeight = if (maxHeight > 0) maxHeight else rawHeight
+
+        var inSampleSize = 1
+        var halfHeight = rawHeight / 2
+        var halfWidth = rawWidth / 2
+
+        while (halfHeight / inSampleSize >= targetHeight && halfWidth / inSampleSize >= targetWidth) {
+            inSampleSize *= 2
+        }
+
+        return inSampleSize.coerceAtLeast(1)
     }
 
     private fun Bitmap.applyOrientation(orientation: Int): Bitmap {

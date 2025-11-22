@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageButton
 import androidx.activity.ComponentActivity
 import androidx.camera.core.Camera
@@ -38,6 +39,7 @@ class MultiCameraActivity : ComponentActivity() {
 
     private val capturedFiles = mutableListOf<File>()
     private lateinit var adapter: ThumbnailAdapter
+    private var hasConfirmedResult = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,9 +64,10 @@ class MultiCameraActivity : ComponentActivity() {
     }
 
     private fun setupThumbnails() {
-        adapter = ThumbnailAdapter(capturedFiles) { file ->
-            capturedFiles.remove(file)
-            adapter.notifyDataSetChanged()
+        adapter = ThumbnailAdapter(capturedFiles) { position, file ->
+            capturedFiles.removeAt(position)
+            file.delete()
+            adapter.notifyItemRemoved(position)
             confirmButton.visibility = if (capturedFiles.isEmpty()) View.GONE else View.VISIBLE
         }
         thumbnails.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -108,6 +111,7 @@ class MultiCameraActivity : ComponentActivity() {
 
     private fun capturePhoto() {
         val imageCapture = imageCapture ?: return
+        animateCaptureButton()
         val photoFile = File.createTempFile("multi_camera_", ".jpg", cacheDir)
 
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -117,9 +121,10 @@ class MultiCameraActivity : ComponentActivity() {
             cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    capturedFiles.add(photoFile)
+                    capturedFiles.add(0, photoFile)
                     runOnUiThread {
-                        adapter.notifyDataSetChanged()
+                        adapter.notifyItemInserted(0)
+                        thumbnails.scrollToPosition(0)
                         confirmButton.visibility = View.VISIBLE
                     }
                 }
@@ -129,6 +134,23 @@ class MultiCameraActivity : ComponentActivity() {
                 }
             }
         )
+    }
+
+    private fun animateCaptureButton() {
+        captureButton.animate()
+            .scaleX(0.88f)
+            .scaleY(0.88f)
+            .setDuration(80)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction {
+                captureButton.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(120)
+                    .setInterpolator(AccelerateDecelerateInterpolator())
+                    .start()
+            }
+            .start()
     }
 
     private fun toggleTorch() {
@@ -160,11 +182,13 @@ class MultiCameraActivity : ComponentActivity() {
     }
 
     private fun finishWithCancel() {
+        cleanupCapturedFiles()
         setResult(Activity.RESULT_CANCELED)
         finish()
     }
 
     private fun finishWithResult() {
+        hasConfirmedResult = true
         val data = Intent()
         data.putExtra("photos", capturedFiles.map { it.absolutePath }.toTypedArray())
         setResult(Activity.RESULT_OK, data)
@@ -176,5 +200,16 @@ class MultiCameraActivity : ComponentActivity() {
         if (::cameraExecutor.isInitialized) {
             cameraExecutor.shutdown()
         }
+
+        if (!hasConfirmedResult) {
+            cleanupCapturedFiles()
+        }
+    }
+
+    private fun cleanupCapturedFiles() {
+        capturedFiles.forEach { file ->
+            file.delete()
+        }
+        capturedFiles.clear()
     }
 }
