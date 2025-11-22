@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageButton
 import androidx.activity.ComponentActivity
 import androidx.camera.core.Camera
@@ -110,6 +111,7 @@ class MultiCameraActivity : ComponentActivity() {
 
     private fun capturePhoto() {
         val imageCapture = imageCapture ?: return
+        animateCaptureButton()
         val photoFile = File.createTempFile("multi_camera_", ".jpg", cacheDir)
 
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -131,6 +133,23 @@ class MultiCameraActivity : ComponentActivity() {
                 }
             }
         )
+    }
+
+    private fun animateCaptureButton() {
+        captureButton.animate()
+            .scaleX(0.88f)
+            .scaleY(0.88f)
+            .setDuration(80)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction {
+                captureButton.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(120)
+                    .setInterpolator(AccelerateDecelerateInterpolator())
+                    .start()
+            }
+            .start()
     }
 
     private fun toggleTorch() {

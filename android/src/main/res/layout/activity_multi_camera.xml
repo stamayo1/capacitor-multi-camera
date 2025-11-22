@@ -37,7 +37,7 @@
         android:background="@android:color/transparent"
         android:contentDescription="Toggle flash"
         android:padding="6dp"
-        android:src="@android:drawable/ic_menu_camera"
+        android:src="@drawable/ic_flash"
         app:tint="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
