@@ -62,12 +62,12 @@ Allow the user to select multiple pictures from the photo gallery
 ### checkPermissions()
 
 ```typescript
-checkPermissions() => Promise<{ camera: 'granted' | 'denied' | 'prompt'; photo: 'granted' | 'denied' | 'prompt'; }>
+checkPermissions() => Promise<{ camera: 'granted' | 'denied' | 'prompt'; photos: 'granted' | 'denied' | 'prompt'; }>
 ```
 
 Check if the app has permissions to use the camera (and optionally gallery).
 
-**Returns:** <code>Promise&lt;{ camera: 'granted' | 'denied' | 'prompt'; photo: 'granted' | 'denied' | 'prompt'; }&gt;</code>
+**Returns:** <code>Promise&lt;{ camera: 'granted' | 'denied' | 'prompt'; photos: 'granted' | 'denied' | 'prompt'; }&gt;</code>
 
 --------------------
 
@@ -75,12 +75,12 @@ Check if the app has permissions to use the camera (and optionally gallery).
 ### requestPermissions()
 
 ```typescript
-requestPermissions() => Promise<{ camera: 'granted' | 'denied'; photo: 'granted' | 'denied'; }>
+requestPermissions() => Promise<{ camera: 'granted' | 'denied'; photos: 'granted' | 'denied'; }>
 ```
 
 Request the necessary permissions to use the camera (and optionally gallery).
 
-**Returns:** <code>Promise&lt;{ camera: 'granted' | 'denied'; photo: 'granted' | 'denied'; }&gt;</code>
+**Returns:** <code>Promise&lt;{ camera: 'granted' | 'denied'; photos: 'granted' | 'denied'; }&gt;</code>
 
 --------------------
 

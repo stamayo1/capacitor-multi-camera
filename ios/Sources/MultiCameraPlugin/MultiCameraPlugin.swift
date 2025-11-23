@@ -11,7 +11,7 @@ import AVFoundation
 @objc(MultiCameraPlugin)
 public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "MultiCameraPlugin"
-    public let jsName = "Camera"
+    public let jsName = "MultiCamera"
     
     //Public methods to comunicate with JS
     public let pluginMethods: [CAPPluginMethod] = [
