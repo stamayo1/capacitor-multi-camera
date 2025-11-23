@@ -1,7 +1,7 @@
-import { Camera } from 'capacitor-multi-camera';
+import { MultiCamera } from 'capacitor-multi-camera';
 
 window.testCheckPermissions = async  () => {
-    const result = await Camera.checkPermissions();
+    const result = await MultiCamera.checkPermissions();
     const container = document.getElementById('container');
     const persmissions = document.createElement("p");
     persmissions.innerText = JSON.stringify(result);
@@ -9,7 +9,7 @@ window.testCheckPermissions = async  () => {
 }
 
 window.testRequestPermissions = () => {
-    Camera.requestPermissions();
+    MultiCamera.requestPermissions();
 }
 
 
@@ -17,7 +17,7 @@ window.testPickImages = async () => {
 
     try {
         
-        const result = await Camera.pickImages({ 
+        const result = await MultiCamera.pickImages({ 
             limit: 15,
             quality: 60
         });
@@ -51,7 +51,7 @@ window.testPickImages = async () => {
 window.testCapture = async () => {
 
     try {
-        const result = await Camera.capture({ 
+        const result = await MultiCamera.capture({ 
             resultType: "uri",
             saveToGallery: false,
             quality: 0.6
