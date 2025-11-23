@@ -22,7 +22,7 @@ import java.io.File
 import java.util.concurrent.Executors
 
 @CapacitorPlugin(
-    name = "Camera",
+    name = "MultiCamera",
     permissions = [
         Permission(
             alias = MultiCameraPlugin.CAMERA_ALIAS,
