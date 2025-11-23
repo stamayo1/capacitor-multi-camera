@@ -2,18 +2,18 @@ import { WebPlugin } from '@capacitor/core';
 
 import type { CaptureResult, GalleryPhotosResult, MultiCameraPlugin } from './definitions';
 
-export class CameraWeb extends WebPlugin implements MultiCameraPlugin {
+export class MultiCameraWeb extends WebPlugin implements MultiCameraPlugin {
   capture(): Promise<CaptureResult> {
     throw new Error('Method not implemented.');
   }
   pickImages(): Promise<GalleryPhotosResult> {
     throw new Error('Method not implemented.');
   }
-  checkPermissions(): Promise<{ camera: 'granted' | 'denied' | 'prompt'; photo: 'granted' | 'denied' | 'prompt';}>{
+  checkPermissions(): Promise<{ camera: 'granted' | 'denied' | 'prompt'; photos: 'granted' | 'denied' | 'prompt';}>{
     throw new Error('Method not implemented.');
   }
   
-  requestPermissions(): Promise<{ camera: 'granted' | 'denied'; photo:  'granted' | 'denied'; }>{
+  requestPermissions(): Promise<{ camera: 'granted' | 'denied'; photos:  'granted' | 'denied'; }>{
     throw new Error('Method not implemented.');
   }
   
