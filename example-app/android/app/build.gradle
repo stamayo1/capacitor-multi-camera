@@ -22,6 +22,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packagingOptions {
+        jniLibs {
+            // Required for 16 KB page size repackaging of bundled native binaries.
+            useLegacyPackaging false
+        }
+    }
 }
 
 repositories {

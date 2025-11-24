@@ -45,6 +45,13 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+    packagingOptions {
+        jniLibs {
+            // Keep native libraries uncompressed so the build tools can
+            // repackage them for 16 KB page size compatible devices.
+            useLegacyPackaging false
+        }
+    }
 }
 
 repositories {
