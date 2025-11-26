@@ -265,8 +265,10 @@ class CameraViewController: UIViewController {
 
     @objc private func showZoomOptions() {
         let alert = UIAlertController(title: "Zoom", message: "Select zoom level", preferredStyle: .actionSheet)
-        guard currentDevice != nil else { return }
-        for option in zoomOptions {
+        guard let device = currentDevice else { return }
+        let supportedOptions = supportedZoomOptions(for: device)
+
+        for option in supportedOptions {
             alert.addAction(UIAlertAction(title: formattedZoomTitle(for: option), style: .default, handler: { _ in
                 self.setZoom(level: option)
             }))
@@ -294,6 +296,17 @@ class CameraViewController: UIViewController {
 
     private func updateZoomButtonTitle(for factor: CGFloat) {
         zoomButton.setTitle(formattedZoomTitle(for: factor), for: .normal)
+    }
+
+    private func supportedZoomOptions(for device: AVCaptureDevice) -> [CGFloat] {
+        let minFactor = device.minAvailableVideoZoomFactor
+        let maxFactor = device.maxAvailableVideoZoomFactor
+
+        let clampedOptions = zoomOptions.map { option in
+            max(minFactor, min(option, maxFactor))
+        }
+
+        return Array(Set(clampedOptions)).sorted()
     }
 
     private func formattedZoomTitle(for factor: CGFloat) -> String {
