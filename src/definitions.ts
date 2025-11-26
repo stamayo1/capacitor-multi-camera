@@ -106,6 +106,14 @@ export interface CaptureOptions {
    */
   quality?: number;
 
+
+  /**
+   * Maximum number of pictures the user will be able to choose.
+   * 
+   * @default 0 (unlimited)
+   */
+  limit?: number;
+
   /**
    * Maximum width of the saved image. The aspect ratio is respected
    *
