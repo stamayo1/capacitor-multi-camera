@@ -337,11 +337,7 @@ class CameraViewController: UIViewController {
             case .builtInTelephotoCamera:
                 let maxZoom = device.maxAvailableVideoZoomFactor
 
-                if maxZoom >= 5 {
-                    options.append(5.0)
-                } else if maxZoom >= 3 {
-                    options.append(3.0)
-                } else if maxZoom >= 2 {
+                if maxZoom >= 2 {
                     options.append(2.0)
                 }
             default:
@@ -384,13 +380,13 @@ class CameraViewController: UIViewController {
 
         if let device = targetDevice {
             configureCamera(device: device)
-            applyZoom(level: zoom, on: device)
+            applyZoom(level: zoom, on: device, displayFactor: zoom)
         } else {
             applyZoom(level: zoom, on: currentDevice)
         }
     }
 
-    private func applyZoom(level: CGFloat, on device: AVCaptureDevice?) {
+    private func applyZoom(level: CGFloat, on device: AVCaptureDevice?, displayFactor: CGFloat? = nil) {
         guard let device = device else { return }
         do {
             try device.lockForConfiguration()
@@ -400,7 +396,7 @@ class CameraViewController: UIViewController {
 
             device.videoZoomFactor = clampedLevel
             device.unlockForConfiguration()
-            updateZoomButtonTitle(for: clampedLevel)
+            updateZoomButtonTitle(for: displayFactor ?? clampedLevel)
         } catch {
             print("Zoom error: \(error)")
         }
