@@ -101,10 +101,24 @@ export interface CaptureOptions {
 
   /**
    * The quality of image to return as JPEG, from 0-100
-   * 
+   *
    * @default 100
    */
   quality?: number;
+
+  /**
+   * Maximum width of the saved image. The aspect ratio is respected
+   *
+   * @default 1080
+   */
+  width?: number;
+
+  /**
+   * Maximum height of the saved image. The aspect ratio is respected
+   *
+   * @default 1920
+   */
+  height?: number;
 }
 
 export interface GalleryImageOptions {
@@ -117,11 +131,15 @@ export interface GalleryImageOptions {
 
   /**
    * Maximum width of the saved image. The aspect ratio is respected
+   *
+   * @default 1080
    */
   width?: number;
 
   /**
    * Maximum height of the saved image. The aspect ratio is respected
+   *
+   * @default 1920
    */
   height?: number;
 

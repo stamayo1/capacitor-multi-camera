@@ -18,6 +18,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
 
+internal const val DEFAULT_CAPTURE_WIDTH = 1080
+internal const val DEFAULT_CAPTURE_HEIGHT = 1920
+
 enum class CameraResultType(val raw: String) {
     BASE64("base64"),
     DATA_URL("dataUrl"),
@@ -33,15 +36,19 @@ data class CaptureSettings(
     val saveToGallery: Boolean = false,
     val quality: Int = 100,
     val limit: Int = 0,
-    val width: Int = 0,
-    val height: Int = 0,
+    val width: Int = DEFAULT_CAPTURE_WIDTH,
+    val height: Int = DEFAULT_CAPTURE_HEIGHT,
 )
 
 class MultiCamera(private val bridge: Bridge) {
 
     fun buildPhotoResult(file: File, settings: CaptureSettings): JSObject {
         val result = JSObject()
-        val adjustedFile = ensureQuality(file, settings.quality)
+        val adjustedFile = if (settings.resultType == CameraResultType.URI && !settings.saveToGallery) {
+            file
+        } else {
+            ensureQuality(file, settings.quality)
+        }
 
         val saved = if (settings.saveToGallery) saveToGallery(adjustedFile) else false
 
@@ -120,6 +127,12 @@ class MultiCamera(private val bridge: Bridge) {
     }
 
     private fun File.toBase64(quality: Int): String {
+        if (quality >= 100) {
+            return inputStream().use { input ->
+                Base64.encodeToString(input.readBytes(), Base64.NO_WRAP)
+            }
+        }
+
         val bitmap = BitmapFactory.decodeFile(absolutePath)
         val stream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)

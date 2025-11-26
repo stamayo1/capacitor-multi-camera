@@ -256,8 +256,8 @@ class MultiCameraPlugin : Plugin() {
         val saveToGallery = getBoolean("saveToGallery") ?: false
         val quality = (getInt("quality") ?: 100).coerceIn(0, 100)
         val limit = getInt("limit") ?: 0
-        val width = getInt("width") ?: 0
-        val height = getInt("height") ?: 0
+        val width = getInt("width") ?: DEFAULT_CAPTURE_WIDTH
+        val height = getInt("height") ?: DEFAULT_CAPTURE_HEIGHT
 
         return CaptureSettings(
             resultType = type,
