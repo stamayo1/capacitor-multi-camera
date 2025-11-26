@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
+import android.util.Size
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageButton
@@ -24,6 +25,12 @@ import java.util.concurrent.Executors
 
 class MultiCameraActivity : ComponentActivity() {
 
+    companion object {
+        const val EXTRA_CAPTURE_WIDTH = "extra_capture_width"
+        const val EXTRA_CAPTURE_HEIGHT = "extra_capture_height"
+        const val EXTRA_LIMIT = "extra_limit"
+    }
+
     private lateinit var previewView: PreviewView
     private lateinit var captureButton: ImageButton
     private lateinit var closeButton: ImageButton
@@ -31,6 +38,10 @@ class MultiCameraActivity : ComponentActivity() {
     private lateinit var torchButton: ImageButton
     private lateinit var switchCameraButton: ImageButton
     private lateinit var thumbnails: RecyclerView
+
+    private var captureWidth: Int = DEFAULT_CAPTURE_WIDTH
+    private var captureHeight: Int = DEFAULT_CAPTURE_HEIGHT
+    private var captureLimit: Int = 0
 
     private var camera: Camera? = null
     private var imageCapture: ImageCapture? = null
@@ -45,12 +56,17 @@ class MultiCameraActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_multi_camera)
 
+        captureWidth = intent.getIntExtra(EXTRA_CAPTURE_WIDTH, DEFAULT_CAPTURE_WIDTH)
+        captureHeight = intent.getIntExtra(EXTRA_CAPTURE_HEIGHT, DEFAULT_CAPTURE_HEIGHT)
+        captureLimit = intent.getIntExtra(EXTRA_LIMIT, 0)
+
         bindViews()
         setupThumbnails()
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         startCamera()
         setupActions()
+        updateCaptureAvailability()
     }
 
     private fun bindViews() {
@@ -69,6 +85,7 @@ class MultiCameraActivity : ComponentActivity() {
             file.delete()
             adapter.notifyItemRemoved(position)
             confirmButton.visibility = if (capturedFiles.isEmpty()) View.GONE else View.VISIBLE
+            updateCaptureAvailability()
         }
         thumbnails.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         thumbnails.adapter = adapter
@@ -91,7 +108,13 @@ class MultiCameraActivity : ComponentActivity() {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
+            val targetSize = Size(
+                captureWidth.coerceAtLeast(1),
+                captureHeight.coerceAtLeast(1),
+            )
+
             imageCapture = ImageCapture.Builder()
+                .setTargetResolution(targetSize)
                 .setTargetRotation(previewView.display?.rotation ?: 0)
                 .build()
 
@@ -111,6 +134,7 @@ class MultiCameraActivity : ComponentActivity() {
 
     private fun capturePhoto() {
         val imageCapture = imageCapture ?: return
+        if (captureLimit > 0 && capturedFiles.size >= captureLimit) return
         animateCaptureButton()
         val photoFile = File.createTempFile("multi_camera_", ".jpg", cacheDir)
 
@@ -126,6 +150,7 @@ class MultiCameraActivity : ComponentActivity() {
                         adapter.notifyItemInserted(0)
                         thumbnails.scrollToPosition(0)
                         confirmButton.visibility = View.VISIBLE
+                        updateCaptureAvailability()
                     }
                 }
 
@@ -211,5 +236,13 @@ class MultiCameraActivity : ComponentActivity() {
             file.delete()
         }
         capturedFiles.clear()
+    }
+
+    private fun updateCaptureAvailability() {
+        if (captureLimit <= 0) return
+
+        val remaining = captureLimit - capturedFiles.size
+        captureButton.isEnabled = remaining > 0
+        captureButton.alpha = if (remaining > 0) 1f else 0.4f
     }
 }

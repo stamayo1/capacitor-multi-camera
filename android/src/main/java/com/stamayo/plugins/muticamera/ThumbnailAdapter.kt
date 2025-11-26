@@ -1,5 +1,6 @@
 package com.stamayo.plugins.muticamera
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
@@ -30,7 +31,7 @@ class ThumbnailAdapter(
         private val removeButton: ImageButton = view.findViewById(R.id.btn_remove)
 
         fun bind(file: File) {
-            val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+            val bitmap = decodeThumbnail(file)
             imageView.setImageBitmap(bitmap)
             removeButton.setOnClickListener {
                 val position = bindingAdapterPosition
@@ -39,5 +40,35 @@ class ThumbnailAdapter(
                 }
             }
         }
+    }
+
+    private fun decodeThumbnail(file: File): Bitmap? {
+        val targetSize = 200
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+
+        val sampleSize = calculateSampleSize(bounds, targetSize, targetSize)
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = sampleSize
+            inPreferredConfig = Bitmap.Config.RGB_565
+        }
+
+        return BitmapFactory.decodeFile(file.absolutePath, options)
+    }
+
+    private fun calculateSampleSize(bounds: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val rawWidth = bounds.outWidth
+        val rawHeight = bounds.outHeight
+        if (rawWidth <= 0 || rawHeight <= 0) return 1
+
+        var inSampleSize = 1
+        var halfHeight = rawHeight / 2
+        var halfWidth = rawWidth / 2
+
+        while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+            inSampleSize *= 2
+        }
+
+        return inSampleSize.coerceAtLeast(1)
     }
 }
