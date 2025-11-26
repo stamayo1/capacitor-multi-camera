@@ -50,6 +50,7 @@ public class MultiCameraPlugin: CAPPlugin, CAPBridgedPlugin {
             vc.modalPresentationStyle = .fullScreen
             vc.resultType = self.settings.resultType
             vc.saveToGallery = self.settings.saveToGallery
+            vc.captureLimit = self.settings.limit
             vc.delegate = self
 
             self.bridge?.viewController?.present(vc, animated: true, completion: nil)

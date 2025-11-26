@@ -16,6 +16,7 @@ class CameraViewController: UIViewController {
     weak var delegate: CameraDelegate?
     var resultType: CameraResultType = CameraResultType.uri
     var saveToGallery: Bool = false
+    var captureLimit: Int = 0
 
     // MARK: - AVFoundation
     private var captureSession: AVCaptureSession!
@@ -99,6 +100,7 @@ class CameraViewController: UIViewController {
         setupCamera()
         setupUI()
         setupActions()
+        updateCaptureAvailability()
     }
 
     override func viewDidLayoutSubviews() {
@@ -246,6 +248,11 @@ class CameraViewController: UIViewController {
     }
 
     @objc private func capturePhoto() {
+        guard captureLimit == 0 || capturedImages.count < captureLimit else {
+            updateCaptureAvailability()
+            return
+        }
+
         animateCaptureFeedback()
         let settings = AVCapturePhotoSettings()
         photoOutput.capturePhoto(with: settings, delegate: self)
@@ -309,6 +316,7 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
                 self.thumbnailsCollection.scrollToItem(at: IndexPath(item: 0, section: 0), at: .left, animated: true)
             }
             confirmButton.isHidden = capturedImages.isEmpty
+            updateCaptureAvailability()
         }
     }
 }
@@ -367,11 +375,27 @@ extension CameraViewController: UICollectionViewDataSource {
             guard let self = self else { return }
             self.capturedImages.remove(at: indexPath.item)
             self.thumbnailsCollection.reloadData()
-            
+
             // Hide confirm button if no images remain
             self.confirmButton.isHidden = self.capturedImages.isEmpty
+            self.updateCaptureAvailability()
         }
 
         return cell
+    }
+}
+
+// MARK: - Capture limit handling
+private extension CameraViewController {
+    func updateCaptureAvailability() {
+        guard captureLimit > 0 else {
+            captureButton.isEnabled = true
+            captureButton.alpha = 1.0
+            return
+        }
+
+        let remaining = captureLimit - capturedImages.count
+        captureButton.isEnabled = remaining > 0
+        captureButton.alpha = remaining > 0 ? 1.0 : 0.4
     }
 }
