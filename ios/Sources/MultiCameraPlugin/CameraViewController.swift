@@ -23,6 +23,7 @@ class CameraViewController: UIViewController {
     private var previewLayer: AVCaptureVideoPreviewLayer!
     private var currentDevice: AVCaptureDevice?
     private var currentInput: AVCaptureDeviceInput?
+    private var zoomOptions: [CGFloat] = []
 
     private var capturedImages: [UIImage] = []
     
@@ -136,6 +137,7 @@ class CameraViewController: UIViewController {
         do {
             currentDevice = device
             let input = try AVCaptureDeviceInput(device: device)
+            zoomOptions = buildZoomOptions(for: device)
 
             if let currentInput = currentInput {
                 captureSession.removeInput(currentInput)
@@ -145,6 +147,8 @@ class CameraViewController: UIViewController {
                 captureSession.addInput(input)
                 currentInput = input
             }
+
+            updateZoomButtonTitle(for: device.videoZoomFactor)
         } catch {
             print("Error configuring camera: \(error)")
         }
@@ -262,10 +266,12 @@ class CameraViewController: UIViewController {
 
     @objc private func showZoomOptions() {
         let alert = UIAlertController(title: "Zoom", message: "Select zoom level", preferredStyle: .actionSheet)
-        let options: [CGFloat] = [0.5, 1.0, 2.0]
+        guard let device = currentDevice else { return }
+
+        let options = zoomOptions.isEmpty ? buildZoomOptions(for: device) : zoomOptions
 
         for option in options {
-            alert.addAction(UIAlertAction(title: "\(option)x", style: .default, handler: { _ in
+            alert.addAction(UIAlertAction(title: formattedZoomTitle(for: option), style: .default, handler: { _ in
                 self.setZoom(level: option)
             }))
         }
@@ -278,12 +284,73 @@ class CameraViewController: UIViewController {
         guard let device = currentDevice else { return }
         do {
             try device.lockForConfiguration()
-            device.videoZoomFactor = max(1.0, min(level, device.activeFormat.videoMaxZoomFactor))
+            let minFactor = device.minAvailableVideoZoomFactor
+            let maxFactor = device.maxAvailableVideoZoomFactor
+            let clampedLevel = max(minFactor, min(level, maxFactor))
+
+            device.videoZoomFactor = clampedLevel
             device.unlockForConfiguration()
-            zoomButton.setTitle("\(level)x", for: .normal)
+            updateZoomButtonTitle(for: clampedLevel)
         } catch {
             print("Zoom error: \(error)")
         }
+    }
+
+    private func buildZoomOptions(for device: AVCaptureDevice) -> [CGFloat] {
+        let minFactor = device.minAvailableVideoZoomFactor
+        let maxFactor = device.maxAvailableVideoZoomFactor
+        var anchors = device.virtualDeviceSwitchOverVideoZoomFactors.map { CGFloat(truncating: $0) }
+
+        if minFactor <= 1.0 && maxFactor >= 1.0 {
+            anchors.append(1.0)
+        }
+
+        anchors.append(contentsOf: [minFactor, maxFactor])
+
+        let uniqueAnchors = anchors
+            .map { max(minFactor, min($0, maxFactor)) }
+            .reduce(into: [CGFloat]()) { partialResult, value in
+                if !partialResult.contains(where: { abs($0 - value) < 0.001 }) {
+                    partialResult.append(value)
+                }
+            }
+            .sorted()
+
+        guard uniqueAnchors.count > 1 else { return uniqueAnchors }
+
+        var options: [CGFloat] = []
+        let interpolationSteps = 3
+
+        for (index, anchor) in uniqueAnchors.enumerated() {
+            options.append(anchor)
+
+            guard index < uniqueAnchors.count - 1 else { continue }
+            let nextAnchor = uniqueAnchors[index + 1]
+            let step = (nextAnchor - anchor) / CGFloat(interpolationSteps + 1)
+
+            for stepIndex in 1...interpolationSteps {
+                options.append(anchor + step * CGFloat(stepIndex))
+            }
+        }
+
+        let uniqueSortedOptions = options
+            .map { max(minFactor, min($0, maxFactor)) }
+            .reduce(into: [CGFloat]()) { partialResult, value in
+                if !partialResult.contains(where: { abs($0 - value) < 0.01 }) {
+                    partialResult.append(value)
+                }
+            }
+            .sorted()
+
+        return uniqueSortedOptions
+    }
+
+    private func updateZoomButtonTitle(for factor: CGFloat) {
+        zoomButton.setTitle(formattedZoomTitle(for: factor), for: .normal)
+    }
+
+    private func formattedZoomTitle(for factor: CGFloat) -> String {
+        return String(format: "%.1fx", factor)
     }
 }
 
