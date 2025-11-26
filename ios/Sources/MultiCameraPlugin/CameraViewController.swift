@@ -24,6 +24,7 @@ class CameraViewController: UIViewController {
     private var previewLayer: AVCaptureVideoPreviewLayer!
     private var currentDevice: AVCaptureDevice?
     private var currentInput: AVCaptureDeviceInput?
+    private let zoomOptions: [CGFloat] = [0.5, 1.0, 3.0]
 
     private var capturedImages: [UIImage] = []
     
@@ -147,6 +148,8 @@ class CameraViewController: UIViewController {
                 captureSession.addInput(input)
                 currentInput = input
             }
+
+            updateZoomButtonTitle(for: device.videoZoomFactor)
         } catch {
             print("Error configuring camera: \(error)")
         }
@@ -269,10 +272,10 @@ class CameraViewController: UIViewController {
 
     @objc private func showZoomOptions() {
         let alert = UIAlertController(title: "Zoom", message: "Select zoom level", preferredStyle: .actionSheet)
-        let options: [CGFloat] = [0.5, 1.0, 2.0]
+        let supportedOptions = availableZoomOptions(for: currentDevice)
 
-        for option in options {
-            alert.addAction(UIAlertAction(title: "\(option)x", style: .default, handler: { _ in
+        for option in supportedOptions {
+            alert.addAction(UIAlertAction(title: formattedZoomTitle(for: option), style: .default, handler: { _ in
                 self.setZoom(level: option)
             }))
         }
@@ -282,12 +285,125 @@ class CameraViewController: UIViewController {
     }
 
     private func setZoom(level: CGFloat) {
-        guard let device = currentDevice else { return }
+        if currentDevice?.position == .back {
+            switchTo(zoom: level)
+        } else {
+            applyZoom(level: level, on: currentDevice)
+        }
+    }
+
+    private func updateZoomButtonTitle(for factor: CGFloat) {
+        zoomButton.setTitle(formattedZoomTitle(for: factor), for: .normal)
+    }
+
+    private func availableZoomOptions(for device: AVCaptureDevice?) -> [CGFloat] {
+        if device?.position == .back {
+            let physicalOptions = getAvailableZoomOptions()
+            if !physicalOptions.isEmpty {
+                return physicalOptions.map { CGFloat($0) }
+            }
+        }
+
+        guard let device = device else { return zoomOptions }
+        let minFactor = device.minAvailableVideoZoomFactor
+        let maxFactor = device.maxAvailableVideoZoomFactor
+
+        let clampedOptions = zoomOptions.map { option in
+            max(minFactor, min(option, maxFactor))
+        }
+
+        return Array(Set(clampedOptions)).sorted()
+    }
+
+    private func formattedZoomTitle(for factor: CGFloat) -> String {
+        return String(format: "%.1fx", factor)
+    }
+
+    private func getAvailableZoomOptions() -> [Double] {
+        let session = AVCaptureDevice.DiscoverySession(
+            deviceTypes: [
+                .builtInUltraWideCamera,
+                .builtInWideAngleCamera,
+                .builtInTelephotoCamera,
+                .builtInTripleCamera,
+                .builtInDualCamera,
+                .builtInDualWideCamera
+            ],
+            mediaType: .video,
+            position: .back
+        )
+
+        var options: [Double] = []
+
+        for device in session.devices {
+            switch device.deviceType {
+            case .builtInUltraWideCamera:
+                options.append(0.5)
+            case .builtInWideAngleCamera:
+                options.append(1.0)
+            case .builtInTelephotoCamera:
+                let maxZoom = device.maxAvailableVideoZoomFactor
+
+                if maxZoom >= 2 {
+                    options.append(2.0)
+                }
+            default:
+                break
+            }
+        }
+
+        return Array(Set(options)).sorted()
+    }
+
+    private func switchTo(zoom: CGFloat) {
+        let session = AVCaptureDevice.DiscoverySession(
+            deviceTypes: [
+                .builtInUltraWideCamera,
+                .builtInWideAngleCamera,
+                .builtInTelephotoCamera
+            ],
+            mediaType: .video,
+            position: .back
+        )
+
+        var targetDevice: AVCaptureDevice?
+
+        for device in session.devices {
+            if zoom == 0.5 && device.deviceType == .builtInUltraWideCamera {
+                targetDevice = device
+                break
+            }
+
+            if zoom == 1.0 && device.deviceType == .builtInWideAngleCamera {
+                targetDevice = device
+                break
+            }
+
+            if zoom > 1.0 && device.deviceType == .builtInTelephotoCamera {
+                targetDevice = device
+                break
+            }
+        }
+
+        if let device = targetDevice {
+            configureCamera(device: device)
+            applyZoom(level: zoom, on: device, displayFactor: zoom)
+        } else {
+            applyZoom(level: zoom, on: currentDevice)
+        }
+    }
+
+    private func applyZoom(level: CGFloat, on device: AVCaptureDevice?, displayFactor: CGFloat? = nil) {
+        guard let device = device else { return }
         do {
             try device.lockForConfiguration()
-            device.videoZoomFactor = max(1.0, min(level, device.activeFormat.videoMaxZoomFactor))
+            let minFactor = device.minAvailableVideoZoomFactor
+            let maxFactor = device.maxAvailableVideoZoomFactor
+            let clampedLevel = max(minFactor, min(level, maxFactor))
+
+            device.videoZoomFactor = clampedLevel
             device.unlockForConfiguration()
-            zoomButton.setTitle("\(level)x", for: .normal)
+            updateZoomButtonTitle(for: displayFactor ?? clampedLevel)
         } catch {
             print("Zoom error: \(error)")
         }
