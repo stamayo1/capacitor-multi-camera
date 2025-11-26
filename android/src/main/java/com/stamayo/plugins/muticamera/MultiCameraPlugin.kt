@@ -106,6 +106,9 @@ class MultiCameraPlugin : Plugin() {
         }
 
         val intent = Intent(context, MultiCameraActivity::class.java)
+        intent.putExtra(MultiCameraActivity.EXTRA_CAPTURE_WIDTH, captureSettings.width)
+        intent.putExtra(MultiCameraActivity.EXTRA_CAPTURE_HEIGHT, captureSettings.height)
+        intent.putExtra(MultiCameraActivity.EXTRA_LIMIT, captureSettings.limit)
         startActivityForResult(call, intent, "handleCaptureResult")
     }
 

@@ -13,7 +13,6 @@ import com.getcapacitor.Bridge
 import com.getcapacitor.FileUtils
 import com.getcapacitor.JSObject
 import androidx.exifinterface.media.ExifInterface
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -44,21 +43,17 @@ class MultiCamera(private val bridge: Bridge) {
 
     fun buildPhotoResult(file: File, settings: CaptureSettings): JSObject {
         val result = JSObject()
-        val adjustedFile = if (settings.resultType == CameraResultType.URI && !settings.saveToGallery) {
-            file
-        } else {
-            ensureQuality(file, settings.quality)
-        }
+        val adjustedFile = adjustFile(file, settings)
 
         val saved = if (settings.saveToGallery) saveToGallery(adjustedFile) else false
 
         when (settings.resultType) {
             CameraResultType.BASE64 -> {
-                val base64 = adjustedFile.toBase64(settings.quality)
+                val base64 = adjustedFile.toBase64()
                 result.put("base64String", base64)
             }
             CameraResultType.DATA_URL -> {
-                val base64 = adjustedFile.toBase64(settings.quality)
+                val base64 = adjustedFile.toBase64()
                 result.put("dataUrl", "data:image/jpeg;base64,$base64")
             }
             CameraResultType.URI -> {
@@ -85,12 +80,46 @@ class MultiCamera(private val bridge: Bridge) {
         return file
     }
 
-    private fun ensureQuality(file: File, quality: Int): File {
-        if (quality >= 100) return file
+    private fun decodeFileWithOrientation(file: File, maxWidth: Int = 0, maxHeight: Int = 0): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
 
-        val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+        val inSampleSize = calculateSampleSize(bounds, maxWidth, maxHeight)
+        val options = BitmapFactory.Options().apply {
+            this.inSampleSize = inSampleSize
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+
+        val bitmap = BitmapFactory.decodeFile(file.absolutePath, options) ?: return null
+        val orientation = ExifInterface(file).getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_UNDEFINED,
+        )
+
+        return bitmap.applyOrientation(orientation)
+    }
+
+    private fun adjustFile(file: File, settings: CaptureSettings): File {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+
+        val rawWidth = bounds.outWidth
+        val rawHeight = bounds.outHeight
+        if (rawWidth <= 0 || rawHeight <= 0) return file
+
+        val targetWidth = if (settings.width > 0) settings.width else rawWidth
+        val targetHeight = if (settings.height > 0) settings.height else rawHeight
+
+        val needsResize = rawWidth > targetWidth || rawHeight > targetHeight
+        val needsReencode = needsResize || settings.quality < 100 || settings.saveToGallery
+
+        if (!needsReencode) return file
+
+        val bitmap = decodeFileWithOrientation(file, targetWidth, targetHeight) ?: return file
+        val scaled = bitmap.scaleIfNeeded(targetWidth, targetHeight)
+
         FileOutputStream(file).use { stream ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
+            scaled.compress(Bitmap.CompressFormat.JPEG, settings.quality, stream)
         }
         return file
     }
@@ -126,17 +155,10 @@ class MultiCamera(private val bridge: Bridge) {
         }.getOrDefault(false)
     }
 
-    private fun File.toBase64(quality: Int): String {
-        if (quality >= 100) {
-            return inputStream().use { input ->
-                Base64.encodeToString(input.readBytes(), Base64.NO_WRAP)
-            }
+    private fun File.toBase64(): String {
+        return inputStream().use { input ->
+            Base64.encodeToString(input.readBytes(), Base64.NO_WRAP)
         }
-
-        val bitmap = BitmapFactory.decodeFile(absolutePath)
-        val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
-        return Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
     }
 
     private fun Context.decodeBitmapWithOrientation(uri: Uri, maxWidth: Int = 0, maxHeight: Int = 0): Bitmap? {

@@ -117,6 +117,7 @@ Request the necessary permissions to use the camera (and optionally gallery).
 | **`quality`**       | <code>number</code>                                           | The quality of image to return as JPEG, from 0-100                                                                                     | <code>100</code>   |
 | **`width`**         | <code>number</code>                                           | Maximum width of the saved image. The aspect ratio is respected                                                                        | <code>1080</code>  |
 | **`height`**        | <code>number</code>                                           | Maximum height of the saved image. The aspect ratio is respected                                                                       | <code>1920</code>  |
+| **`limit`**         | <code>number</code>                                           | Maximum number of pictures the user will be able to take.                                                                               | <code>0 (unlimited)</code> |
 
 
 #### GalleryPhotosResult
