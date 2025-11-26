@@ -127,13 +127,6 @@ export interface CaptureOptions {
    * @default 1920
    */
   height?: number;
-
-  /**
-   * Maximum number of pictures the user will be able to take in one session.
-   *
-   * @default 0 (unlimited)
-   */
-  limit?: number;
 }
 
 export interface GalleryImageOptions {
