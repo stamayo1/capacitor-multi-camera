@@ -110,11 +110,14 @@ Request the necessary permissions to use the camera (and optionally gallery).
 
 #### CaptureOptions
 
-| Prop                | Type                                                          | Description                                                                                                                                                                    | Default            |
-| ------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| **`resultType`**    | <code><a href="#cameraresulttype">CameraResultType</a></code> | The format in which to return the image. - 'base64': return image as base64 string - 'dataUrl': return image as base64 with dataUrl prefix - 'uri': return image as a path/uri | <code>'uri'</code> |
-| **`saveToGallery`** | <code>boolean</code>                                          | Save the captured image(s) to the device gallery.                                                                                                                              | <code>false</code> |
-| **`quality`**       | <code>number</code>                                           | The quality of image to return as JPEG, from 0-100                                                                                                                             | <code>100</code>   |
+| Prop                | Type                                                          | Description                                                                                                                                                                    | Default                    |
+| ------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| **`resultType`**    | <code><a href="#cameraresulttype">CameraResultType</a></code> | The format in which to return the image. - 'base64': return image as base64 string - 'dataUrl': return image as base64 with dataUrl prefix - 'uri': return image as a path/uri | <code>'uri'</code>         |
+| **`saveToGallery`** | <code>boolean</code>                                          | Save the captured image(s) to the device gallery.                                                                                                                              | <code>false</code>         |
+| **`quality`**       | <code>number</code>                                           | The quality of image to return as JPEG, from 0-100                                                                                                                             | <code>100</code>           |
+| **`limit`**         | <code>number</code>                                           | Maximum number of pictures the user will be able to choose.                                                                                                                    | <code>0 (unlimited)</code> |
+| **`width`**         | <code>number</code>                                           | Maximum width of the saved image. The aspect ratio is respected                                                                                                                | <code>1080</code>          |
+| **`height`**        | <code>number</code>                                           | Maximum height of the saved image. The aspect ratio is respected                                                                                                               | <code>1920</code>          |
 
 
 #### GalleryPhotosResult
@@ -139,8 +142,8 @@ Request the necessary permissions to use the camera (and optionally gallery).
 | Prop          | Type                | Description                                                      | Default                    |
 | ------------- | ------------------- | ---------------------------------------------------------------- | -------------------------- |
 | **`quality`** | <code>number</code> | The quality of image to return as JPEG, from 0-100               | <code>100</code>           |
-| **`width`**   | <code>number</code> | Maximum width of the saved image. The aspect ratio is respected  |                            |
-| **`height`**  | <code>number</code> | Maximum height of the saved image. The aspect ratio is respected |                            |
+| **`width`**   | <code>number</code> | Maximum width of the saved image. The aspect ratio is respected  | <code>1080</code>          |
+| **`height`**  | <code>number</code> | Maximum height of the saved image. The aspect ratio is respected | <code>1920</code>          |
 | **`limit`**   | <code>number</code> | Maximum number of pictures the user will be able to choose.      | <code>0 (unlimited)</code> |
 
 

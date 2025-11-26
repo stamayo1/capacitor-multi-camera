@@ -54,7 +54,8 @@ window.testCapture = async () => {
         const result = await MultiCamera.capture({ 
             resultType: "uri",
             saveToGallery: false,
-            quality: 0.6
+            quality: 0.6,
+            limit: 5
         });
     
         const container = document.getElementById("container");
